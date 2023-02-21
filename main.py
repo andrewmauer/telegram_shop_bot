@@ -40,11 +40,6 @@ def message_reply(message): # Interaction with main buttons
         bot.send_media_group(message.chat.id, cat.get_catalog())
     elif message.text == 'Make an order': # Start making order
         markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2) # Preferences for catalog buttons       
-        # c1 = types.KeyboardButton('Moscow')
-        # c2 = types.KeyboardButton('Saint-Petersburg')
-        # c3 = types.KeyboardButton('Almaty')
-        # c4 = types.KeyboardButton('Astana')
-        # b = types.KeyboardButton('Back to menu')
         markup.add(ct_b[0], ct_b[1], ct_b[2], ct_b[3], ct_b[4]) # City buttons
         bot.send_message(message.chat.id, 'Please, choose your city.', reply_markup=markup)
         bot.register_next_step_handler(message, get_info)
