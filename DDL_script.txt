@@ -1,0 +1,121 @@
+-- public.brand definition
+
+-- Drop table
+
+-- DROP TABLE public.brand;
+
+CREATE TABLE public.brand (
+	brand_id int4 NOT NULL DEFAULT nextval('brand_id_brand_seq'::regclass),
+	brand_name varchar(30) NULL,
+	CONSTRAINT brand_pkey PRIMARY KEY (brand_id)
+);
+
+
+-- public.city definition
+
+-- Drop table
+
+-- DROP TABLE public.city;
+
+CREATE TABLE public.city (
+	city_id int4 NOT NULL DEFAULT nextval('city_id_city_seq'::regclass),
+	city_name varchar(50) NULL,
+	days_delivery int4 NULL,
+	CONSTRAINT city_pkey PRIMARY KEY (city_id)
+);
+
+
+-- public.sizes definition
+
+-- Drop table
+
+-- DROP TABLE public.sizes;
+
+CREATE TABLE public.sizes (
+	size_id smallserial NOT NULL,
+	size_name varchar(10) NULL,
+	CONSTRAINT sizes_pkey PRIMARY KEY (size_id)
+);
+
+
+-- public.client definition
+
+-- Drop table
+
+-- DROP TABLE public.client;
+
+CREATE TABLE public.client (
+	client_id varchar(30) NOT NULL,
+	client_name varchar(70) NULL,
+	client_username varchar(50) NULL,
+	city_id int4 NULL,
+	CONSTRAINT client_pkey PRIMARY KEY (client_id),
+	CONSTRAINT client_city_id_fkey FOREIGN KEY (city_id) REFERENCES public.city(city_id)
+);
+
+
+-- public.items definition
+
+-- Drop table
+
+-- DROP TABLE public.items;
+
+CREATE TABLE public.items (
+	item_id int4 NOT NULL DEFAULT nextval('items_id_item_seq'::regclass),
+	item_name varchar(50) NULL,
+	brand_id int4 NULL,
+	item_price numeric(8, 2) NULL,
+	CONSTRAINT items_pkey PRIMARY KEY (item_id),
+	CONSTRAINT items_id_brand_fkey FOREIGN KEY (brand_id) REFERENCES public.brand(brand_id)
+);
+
+
+-- public.orders definition
+
+-- Drop table
+
+-- DROP TABLE public.orders;
+
+CREATE TABLE public.orders (
+	order_id smallserial NOT NULL,
+	client_id varchar(30) NULL,
+	order_time timestamptz NULL DEFAULT now(),
+	order_status varchar(50) NULL DEFAULT 'In delivery'::character varying,
+	CONSTRAINT orders_pkey PRIMARY KEY (order_id),
+	CONSTRAINT orders_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.client(client_id) ON DELETE CASCADE
+);
+
+
+-- public.buy_order definition
+
+-- Drop table
+
+-- DROP TABLE public.buy_order;
+
+CREATE TABLE public.buy_order (
+	client_id varchar(30) NULL,
+	item_id int4 NULL,
+	size_id int4 NULL,
+	amount int4 NULL,
+	summ_order numeric(8, 2) NULL,
+	order_id int4 NULL,
+	CONSTRAINT buy_order_client_id_fkey FOREIGN KEY (client_id) REFERENCES public.client(client_id),
+	CONSTRAINT buy_order_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.items(item_id),
+	CONSTRAINT buy_order_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(order_id) ON DELETE CASCADE
+);
+
+
+-- public.item_size definition
+
+-- Drop table
+
+-- DROP TABLE public.item_size;
+
+CREATE TABLE public.item_size (
+	item_size_id smallserial NOT NULL,
+	item_id int4 NULL,
+	size_id int4 NULL,
+	amount int4 NULL,
+	CONSTRAINT item_size_item_id_fkey FOREIGN KEY (item_id) REFERENCES public.items(item_id),
+	CONSTRAINT item_size_size_id_fkey FOREIGN KEY (size_id) REFERENCES public.sizes(size_id)
+);
