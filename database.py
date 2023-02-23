@@ -1,7 +1,7 @@
 import psycopg2
 from config import host, user, password, db_name
 
-connection = psycopg2.connect( #connecting with our PostgreSQL database
+connection = psycopg2.connect( # Connecting to PostgreSQL database
     host=host,
     user=user,
     password=password,
@@ -13,7 +13,7 @@ class Query():
     def execute_query(self, sql, arr):
         with connection.cursor() as cursor:
             cursor.execute(sql, arr)
-    def fetch_query(self, sql, arr):
+    def fetch_all(self, sql, arr):
         with connection.cursor() as cursor:
             cursor.execute(sql, arr)
             result = cursor.fetchall()

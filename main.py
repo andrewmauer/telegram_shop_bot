@@ -1,19 +1,19 @@
 import telebot
 from telebot import types
 from catalog import Catalog, itemslist, sizeslist, c_b, s_b, ct_b
-from database import Query #connection
+from database import Query
 
 # VARIABLES
 
-items = [] # List of items with parameters
-user_info = [] #List of user information
+items = [] # List with items with parameters
+user_info = [] # List with user information
 bot = telebot.TeleBot('Your token') # Bot token
 db = Query() # Database class
 cat = Catalog() # Catalog class from catalog.py
 
 # COMMAND HANDLER
 
-@bot.message_handler(commands=['start']) #start actions
+@bot.message_handler(commands=['start']) # Start buttons
 
 def start(message): # /start function
     markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2)
@@ -23,9 +23,9 @@ def start(message): # /start function
     instagram = types.KeyboardButton('Our Instagram')
     status = types.KeyboardButton('Order status')
     reply = types.KeyboardButton('Contact manager')
-    if message.from_user.last_name: #if last name exists, we'll connect first name and last name
+    if message.from_user.last_name: # If last name exists, we'll show first name and last name
         mess = f'Hello, <b>{message.from_user.first_name} {message.from_user.last_name}</b>, welcome to SneakersForYou! Here you can find a good sneakers for your taste!'
-    else: #if not, we'll show only first name
+    else: # If not, we'll show only first name
         mess = f'Hello, <b>{message.from_user.first_name}</b>, welcome to SneakersForYou! Here you can find a good sneakers for your taste!'
     markup.add(catalog, make_order, information, instagram, status, reply) # Main buttons
     bot.send_message(message.chat.id, mess, parse_mode='HTML')
@@ -39,7 +39,7 @@ def message_reply(message): # Interaction with main buttons
     if message.text == 'Catalog': # Showing the catalog of items
         bot.send_media_group(message.chat.id, cat.get_catalog())
     elif message.text == 'Make an order': # Start making order
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2) # Preferences for catalog buttons       
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2) # Preferences for catalog buttons 
         markup.add(ct_b[0], ct_b[1], ct_b[2], ct_b[3], ct_b[4]) # City buttons
         bot.send_message(message.chat.id, 'Please, choose your city.', reply_markup=markup)
         bot.register_next_step_handler(message, get_info)
@@ -51,13 +51,13 @@ def message_reply(message): # Interaction with main buttons
     elif message.text == 'Order status': # Show all orders of client
         info_list = []
         client_id = str(message.from_user.id)
-        info = db.fetch_query('SELECT os.order_id, item_name, size_name, amount, summ_order, order_status FROM orders os inner join buy_order bo on bo.order_id = os.order_id inner join items i on i.item_id = bo.item_id inner join sizes s on s.size_id = bo.size_id WHERE os.client_id = %s', (client_id,))
-        orders_counter = db.fetch_query('SELECT COUNT(order_id) FROM orders WHERE client_id = %s', (client_id, ))[0][0]
-        orders = db.fetch_query('SELECT order_id FROM orders WHERE client_id = %s', (client_id, ))
-        city = db.fetch_query('SELECT city_name FROM client c inner join city ct on c.city_id = ct.city_id WHERE client_id = %s', (client_id, ))[0][0]
+        info = db.fetch_all('SELECT os.order_id, item_name, size_name, amount, summ_order, order_status FROM orders os inner join buy_order bo on bo.order_id = os.order_id inner join items i on i.item_id = bo.item_id inner join sizes s on s.size_id = bo.size_id WHERE os.client_id = %s', (client_id,))
+        orders_counter = db.fetch_all('SELECT COUNT(order_id) FROM orders WHERE client_id = %s', (client_id, ))[0][0]
+        orders = db.fetch_all('SELECT order_id FROM orders WHERE client_id = %s', (client_id, ))
+        city = db.fetch_all('SELECT city_name FROM client c inner join city ct on c.city_id = ct.city_id WHERE client_id = %s', (client_id, ))[0][0]
         if info: # If order(s) exists, it'll show info about all of them
             for i in range(orders_counter):
-                info = db.fetch_query('SELECT os.order_id, item_name, size_name, amount, item_price, summ_order, order_status FROM orders os inner join buy_order bo on bo.order_id = os.order_id inner join items i on i.item_id = bo.item_id inner join sizes s on s.size_id = bo.size_id WHERE os.client_id = %s AND os.order_id = %s', (client_id, orders[i]))
+                info = db.fetch_all('SELECT os.order_id, item_name, size_name, amount, item_price, summ_order, order_status FROM orders os inner join buy_order bo on bo.order_id = os.order_id inner join items i on i.item_id = bo.item_id inner join sizes s on s.size_id = bo.size_id WHERE os.client_id = %s AND os.order_id = %s', (client_id, orders[i]))
                 line_order = f'Order number: {info[0][0]}.'
                 info_list.append(line_order)
                 num = 0
@@ -161,7 +161,7 @@ def get_amount(message): # Getting the amount of item and inserting it into the 
         markup.add(y, n)
         bot.send_message(message.chat.id, 'Do you want to order something else?', reply_markup=markup)
         bot.register_next_step_handler(message, order_repeat)
-    elif message.text == 'Back to item selection': #if user choosed a wrong size
+    elif message.text == 'Back to item selection': # If user choosed a wrong size
         message.text = user_info[0]
         items.clear()
         get_info(message)
@@ -172,17 +172,17 @@ def get_amount(message): # Getting the amount of item and inserting it into the 
         bot.send_message(message.chat.id, 'Please type an correct amount in digits.')
         bot.register_next_step_handler(message, get_amount)
 
-def order_repeat(message): # If user want to add some extra items, this func will send user to order function again without asking a city
+def order_repeat(message): # If user want to add some extra items, this func will send user to order function again without asking to choose a city
     if message.text == 'Yes': # Repeat the get_info func
         message.text = user_info[0]
         get_info_repeat(message) # Extra func get_info without button 'Back to city selection'
     elif message.text == 'No':
-        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2) #preferences for catalog buttons
+        markup = types.ReplyKeyboardMarkup(resize_keyboard=True, row_width=2) # Preferences for catalog buttons
         y = types.KeyboardButton('Yes')
         n = types.KeyboardButton('No')
         markup.add(y, n)
         client_id = str(message.from_user.id)
-        result = db.fetch_query('SELECT item_name, size_name, item_price, amount, summ_order from buy_order inner join items on buy_order.item_id = items.item_id inner join sizes on buy_order.size_id = sizes.size_id inner join client on buy_order.client_id = client.client_id where buy_order.client_id = %s and buy_order.order_id IS NULL', (client_id,))
+        result = db.fetch_all('SELECT item_name, size_name, item_price, amount, summ_order from buy_order inner join items on buy_order.item_id = items.item_id inner join sizes on buy_order.size_id = sizes.size_id inner join client on buy_order.client_id = client.client_id where buy_order.client_id = %s and buy_order.order_id IS NULL', (client_id,))
         number = 0
         order_list = []
         items_list = 'List of your items:'
@@ -194,7 +194,7 @@ def order_repeat(message): # If user want to add some extra items, this func wil
             order_list.append('\n' + line)
             total += float(row[4])
         add_total = f'Total: {total}0 $.'
-        city = db.fetch_query('SELECT city_name FROM client c inner join city ct on c.city_id = ct.city_id WHERE client_id = %s', (client_id, ))[0][0]
+        city = db.fetch_all('SELECT city_name FROM client c inner join city ct on c.city_id = ct.city_id WHERE client_id = %s', (client_id, ))[0][0]
         add_city = f'Shipping to: <b>{city}</b>.'
         order_list.append('\n' + add_total)
         order_list.append('\n' + add_city)
@@ -226,8 +226,8 @@ def finish(message): # Finishing the order
         db.execute_query('INSERT INTO orders (client_id) VALUES (%s)', (client_id,))
         db.execute_query('UPDATE buy_order SET order_id = (SELECT MAX(order_id) FROM orders WHERE client_id = %s) where client_id = %s and order_id IS NULL', (client_id, client_id))
         days = db.fetch_one('select days_delivery from city inner join client on client.city_id = city.city_id where client_id = %s', (client_id,))
-        ord_num = db.fetch_query('SELECT MAX(order_id) FROM orders WHERE client_id = %s', (client_id, ))[0][0]
-        city = db.fetch_query('SELECT city_name FROM client c inner join city ct on c.city_id = ct.city_id WHERE client_id = %s', (client_id, ))[0][0]
+        ord_num = db.fetch_all('SELECT MAX(order_id) FROM orders WHERE client_id = %s', (client_id, ))[0][0]
+        city = db.fetch_all('SELECT city_name FROM client c inner join city ct on c.city_id = ct.city_id WHERE client_id = %s', (client_id, ))[0][0]
         bot.send_message(message.chat.id, f'Great! Your order number is: {ord_num}. Deliver to {city} will take {days[0]} days. Check your order status by touching the button in menu!')
         start(message)
     elif message.text == 'No':
